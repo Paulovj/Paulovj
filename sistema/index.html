@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Energizando House – Sistema</title>
+<style>
+  @font-face { font-family: "Kanit"; src: url("../fontes/Kanit-ExtraBoldItalic.ttf") format("truetype"); font-weight: 800; font-style: italic; }
+  @font-face { font-family: "Rajdhani"; src: url("../fontes/Rajdhani-Medium.ttf") format("truetype"); font-weight: 500; }
+  @font-face { font-family: "Rajdhani"; src: url("../fontes/Rajdhani-SemiBold.ttf") format("truetype"); font-weight: 600 900; }
+
+  :root {
+    --cor-fundo: #f3f4f6;
+    --cor-painel: #ffffff;
+    --cor-texto: #111827;
+    --cor-suave: #6b7280;
+    --cor-borda: #d1d5db;
+    --cor-marca: #f5b301;
+    --cor-marca-escura: #111827;
+    --cor-erro: #b91c1c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Rajdhani", Arial, sans-serif; font-weight: 500; font-size: 17px; background: var(--cor-fundo); color: var(--cor-texto); }
+
+  /* ---------- Menu ---------- */
+  header.topo { background: var(--cor-marca-escura); color: #fff; display: flex; align-items: center; gap: 24px; padding: 0 16px; flex-wrap: wrap; }
+  .logo { font-family: "Kanit", Arial, sans-serif; font-style: italic; font-weight: 800; font-size: 22px; letter-spacing: .5px; padding: 12px 0; }
+  .logo span { color: var(--cor-marca); }
+  nav.menu { display: flex; gap: 4px; }
+  .menu-item { position: relative; }
+  .menu-item > button { background: none; border: 0; color: #fff; font: inherit; font-weight: 600; padding: 16px 14px; cursor: pointer; }
+  .menu-item > button:hover, .menu-item.aberto > button { background: rgba(255,255,255,.12); }
+  .submenu { display: none; position: absolute; top: 100%; left: 0; min-width: 220px; background: #fff; border: 1px solid var(--cor-borda); border-radius: 0 0 8px 8px; box-shadow: 0 8px 20px rgba(0,0,0,.15); z-index: 10; }
+  .menu-item.aberto .submenu { display: block; }
+  .submenu a { display: block; padding: 12px 16px; color: var(--cor-texto); text-decoration: none; font-weight: 600; }
+  .submenu a:hover, .submenu a.ativo { background: #fff7db; }
+
+  main { max-width: 1200px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  .subtitulo { color: var(--cor-suave); margin: 0 0 20px; }
+
+  .grade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 900px) { .grade { grid-template-columns: minmax(0, 1fr); } }
+  .painel { background: var(--cor-painel); border: 1px solid var(--cor-borda); border-radius: 10px; padding: 18px; }
+  .painel h2 { font-size: 19px; margin: 0 0 12px; }
+  fieldset { border: 0; padding: 0; margin: 0 0 16px; }
+  legend { font-weight: 700; font-size: 15px; text-transform: uppercase; letter-spacing: .5px; color: var(--cor-suave); margin-bottom: 8px; }
+  .linha { display: grid; gap: 10px; grid-template-columns: repeat(12, 1fr); margin-bottom: 10px; }
+  .c2 { grid-column: span 2; } .c3 { grid-column: span 3; } .c4 { grid-column: span 4; } .c5 { grid-column: span 5; }
+  .c6 { grid-column: span 6; } .c8 { grid-column: span 8; } .c9 { grid-column: span 9; } .c12 { grid-column: span 12; }
+  @media (max-width: 600px) { .linha > * { grid-column: span 12; } }
+  label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  input, textarea, select { width: 100%; font: inherit; font-size: 16px; padding: 8px 10px; border: 1px solid var(--cor-borda); border-radius: 6px; background: #fff; color: var(--cor-texto); }
+  input:focus, textarea:focus, select:focus { outline: 2px solid var(--cor-marca); border-color: var(--cor-marca); }
+  textarea { resize: vertical; min-height: 64px; }
+  .obrigatorio::after { content: " *"; color: var(--cor-erro); }
+  .dica { font-size: 13px; color: var(--cor-suave); margin-top: 3px; }
+  .erro { color: var(--cor-erro); font-weight: 600; min-height: 22px; }
+
+  .botoes { display: flex; gap: 10px; flex-wrap: wrap; }
+  button.btn { font: inherit; font-weight: 700; font-size: 17px; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--cor-borda); background: #fff; cursor: pointer; }
+  button.btn:hover { background: #f9fafb; }
+  button.btn.primario { background: var(--cor-marca); border-color: var(--cor-marca); color: #111; }
+  button.btn.primario:hover { filter: brightness(.95); }
+  button.btn.pequeno { font-size: 14px; padding: 5px 10px; }
+
+  details.config { margin-top: 16px; }
+  details.config summary { cursor: pointer; font-weight: 700; }
+  details.config[open] summary { margin-bottom: 12px; }
+
+  .historico { list-style: none; padding: 0; margin: 0; }
+  .historico li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #eee; }
+  .historico li:last-child { border-bottom: 0; }
+  .historico .info { min-width: 0; }
+  .historico .info strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .historico .info small { color: var(--cor-suave); }
+  .vazio { color: var(--cor-suave); }
+
+  /* ---------- Pré-visualização ---------- */
+  .previa-area { display: flex; flex-wrap: wrap; gap: 12px; max-height: 70vh; overflow: auto; padding: 4px; }
+  .previa-area .etiqueta { box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+  .resumo { margin: 0 0 10px; color: var(--cor-suave); }
+  .aviso { margin: 0 0 10px; padding: 8px 10px; border-radius: 6px; background: #fff7db; border: 1px solid var(--cor-marca); font-weight: 600; }
+
+  /* ---------- Etiqueta (mesmo layout na tela e na impressão) ---------- */
+  .etiqueta {
+    --h: 75;                         /* altura em mm, ajustada pelo JS */
+    width: calc(var(--w, 100) * 1mm);
+    height: calc(var(--h) * 1mm);
+    padding: 2.5mm 3mm;
+    background: #fff; color: #000;
+    font-family: "Rajdhani", Arial, sans-serif; font-weight: 600;
+    font-size: calc(min(var(--h), var(--w, 100) * .75) * .052mm);
+    line-height: 1.15;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #000;
+  }
+  .et-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 2mm; border-bottom: .5mm solid #000; padding-bottom: 1mm; }
+  .et-marca { font-family: "Kanit", Arial, sans-serif; font-style: italic; font-weight: 800; font-size: 1.15em; line-height: 1.1; }
+  .et-remetente { font-size: .78em; font-weight: 500; }
+  .et-pedido { text-align: right; font-weight: 700; white-space: nowrap; }
+  .et-rotulo { font-size: .7em; font-weight: 700; letter-spacing: .3mm; text-transform: uppercase; }
+  .et-dest { padding: 1mm 0; border-bottom: .5mm solid #000; }
+  .et-nome { font-size: 1.3em; font-weight: 800; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .et-end { font-size: 1.1em; }
+  .et-cep { font-size: 1.15em; font-weight: 800; }
+  .et-item { flex: 1; min-height: 0; padding: 1mm 0; overflow: hidden; display: flex; flex-direction: column; }
+  .et-item-texto { flex: 1; min-height: 0; font-size: 1.1em; overflow: hidden; white-space: pre-line; }
+  .et-rodape { display: flex; justify-content: space-between; align-items: flex-end; border-top: .5mm solid #000; padding-top: 1mm; }
+  .et-entrega { font-size: .85em; }
+  .et-volume { text-align: right; }
+  .et-volume-num { font-size: 2.4em; font-weight: 900; line-height: .95; }
+
+  #area-impressao { display: none; }
+
+  @media print {
+    body { background: #fff; }
+    header.topo, main { display: none !important; }
+    #area-impressao { display: block; }
+    #area-impressao .etiqueta { border: 0; page-break-after: always; break-after: page; }
+    #area-impressao .etiqueta:last-child { page-break-after: auto; break-after: auto; }
+  }
+</style>
+<style id="estilo-pagina"></style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="logo">ENERGIZANDO <span>HOUSE</span></div>
+  <nav class="menu" aria-label="Menu principal">
+    <div class="menu-item" id="menu-vendas">
+      <button type="button" aria-haspopup="true" aria-expanded="false">Vendas ▾</button>
+      <div class="submenu" role="menu">
+        <a href="#etiqueta-entrega" class="ativo" role="menuitem">🏷️ Etiqueta de entrega</a>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main id="etiqueta-entrega">
+  <h1>Etiqueta de entrega</h1>
+  <p class="subtitulo">Preencha os dados da venda e imprima uma etiqueta por volume na Elgin L42.</p>
+
+  <div class="grade">
+    <section class="painel">
+      <form id="form-etiqueta" novalidate>
+        <fieldset>
+          <legend>Venda</legend>
+          <div class="linha">
+            <div class="c4"><label for="pedido">Nº do pedido / NF</label><input id="pedido" autocomplete="off"></div>
+            <div class="c4"><label for="dataEntrega">Data de entrega</label><input id="dataEntrega" type="date"></div>
+            <div class="c4"><label for="volumes" class="obrigatorio">Qtd. de volumes</label><input id="volumes" type="number" min="1" max="999" value="1" inputmode="numeric"></div>
+          </div>
+          <div class="linha">
+            <div class="c12">
+              <label for="item" class="obrigatorio">Item(ns)</label>
+              <textarea id="item" rows="2" placeholder="Ex.: Kit painel solar 550W – 2 un."></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Destinatário / endereço de entrega</legend>
+          <div class="linha">
+            <div class="c8"><label for="nome" class="obrigatorio">Nome</label><input id="nome" autocomplete="off"></div>
+            <div class="c4"><label for="telefone">Telefone</label><input id="telefone" inputmode="tel" autocomplete="off"></div>
+          </div>
+          <div class="linha">
+            <div class="c4">
+              <label for="cep">CEP</label>
+              <input id="cep" inputmode="numeric" maxlength="9" placeholder="00000-000" autocomplete="off">
+              <div class="dica" id="cep-status">Digite o CEP para preencher o endereço.</div>
+            </div>
+            <div class="c8"><label for="rua" class="obrigatorio">Rua / logradouro</label><input id="rua" autocomplete="off"></div>
+          </div>
+          <div class="linha">
+            <div class="c3"><label for="numero">Número</label><input id="numero" autocomplete="off"></div>
+            <div class="c9"><label for="complemento">Complemento / referência</label><input id="complemento" autocomplete="off"></div>
+          </div>
+          <div class="linha">
+            <div class="c5"><label for="bairro">Bairro</label><input id="bairro" autocomplete="off"></div>
+            <div class="c5"><label for="cidade" class="obrigatorio">Cidade</label><input id="cidade" autocomplete="off"></div>
+            <div class="c2"><label for="uf">UF</label><input id="uf" maxlength="2" autocomplete="off"></div>
+          </div>
+        </fieldset>
+
+        <div class="erro" id="erro" role="alert"></div>
+        <div class="botoes">
+          <button type="submit" class="btn primario">🖨️ Imprimir etiquetas</button>
+          <button type="button" class="btn" id="btn-limpar">Limpar</button>
+        </div>
+
+        <details class="config">
+          <summary>⚙️ Configurações da etiqueta e do remetente</summary>
+          <div class="linha">
+            <div class="c6">
+              <label for="tamanho">Tamanho da etiqueta</label>
+              <select id="tamanho">
+                <option value="100x50">100 × 50 mm</option>
+                <option value="100x75" selected>100 × 75 mm</option>
+                <option value="100x100">100 × 100 mm</option>
+                <option value="100x150">100 × 150 mm</option>
+                <option value="custom">Outro…</option>
+              </select>
+            </div>
+            <div class="c3"><label for="larguraMm">Largura (mm)</label><input id="larguraMm" type="number" min="20" max="104" value="100"></div>
+            <div class="c3"><label for="alturaMm">Altura (mm)</label><input id="alturaMm" type="number" min="20" max="300" value="75"></div>
+          </div>
+          <p class="dica">A Elgin L42 imprime até 104 mm de largura. Use o mesmo tamanho configurado no driver da impressora.</p>
+          <div class="linha">
+            <div class="c6"><label for="remNome">Remetente</label><input id="remNome" value="Energizando House"></div>
+            <div class="c6"><label for="remTelefone">Telefone do remetente</label><input id="remTelefone"></div>
+          </div>
+          <div class="linha">
+            <div class="c12"><label for="remEndereco">Endereço do remetente (opcional)</label><input id="remEndereco"></div>
+          </div>
+        </details>
+      </form>
+    </section>
+
+    <div>
+      <section class="painel">
+        <h2>Pré-visualização</h2>
+        <p class="resumo" id="resumo"></p>
+        <p class="aviso" id="aviso-item" hidden>⚠️ O item não coube inteiro na etiqueta. Resuma o texto ou use uma etiqueta maior nas configurações.</p>
+        <div class="previa-area" id="previa"></div>
+      </section>
+
+      <section class="painel" style="margin-top:20px">
+        <h2>Últimas etiquetas</h2>
+        <ul class="historico" id="historico"></ul>
+      </section>
+    </div>
+  </div>
+</main>
+
+<div id="area-impressao" aria-hidden="true"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var CHAVE_CONFIG = "eh.etiquetas.config";
+  var CHAVE_HISTORICO = "eh.etiquetas.historico";
+  var MAX_HISTORICO = 20;
+  var MAX_PREVIA = 30;
+
+  var CAMPOS_VENDA = ["pedido", "dataEntrega", "volumes", "item", "nome", "telefone", "cep", "rua", "numero", "complemento", "bairro", "cidade", "uf"];
+  var CAMPOS_CONFIG = ["tamanho", "larguraMm", "alturaMm", "remNome", "remTelefone", "remEndereco"];
+
+  function $(id) { return document.getElementById(id); }
+
+  function lerArmazenado(chave, padrao) {
+    try { var v = localStorage.getItem(chave); return v ? JSON.parse(v) : padrao; } catch (e) { return padrao; }
+  }
+  function gravarArmazenado(chave, valor) {
+    try { localStorage.setItem(chave, JSON.stringify(valor)); } catch (e) { /* sem armazenamento: segue sem salvar */ }
+  }
+
+  function escapar(texto) {
+    return String(texto == null ? "" : texto)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function lerCampos(lista) {
+    var dados = {};
+    lista.forEach(function (id) { dados[id] = $(id).value.trim(); });
+    return dados;
+  }
+  function preencherCampos(dados) {
+    Object.keys(dados || {}).forEach(function (id) { if ($(id)) $(id).value = dados[id]; });
+  }
+
+  // ---------- Menu ----------
+  var menuVendas = $("menu-vendas");
+  var botaoMenu = menuVendas.querySelector("button");
+  botaoMenu.addEventListener("click", function (ev) {
+    ev.stopPropagation();
+    var aberto = menuVendas.classList.toggle("aberto");
+    botaoMenu.setAttribute("aria-expanded", aberto);
+  });
+  document.addEventListener("click", function () {
+    menuVendas.classList.remove("aberto");
+    botaoMenu.setAttribute("aria-expanded", "false");
+  });
+
+  // ---------- Formatação ----------
+  function formatarCep(valor) {
+    var d = valor.replace(/\D/g, "").slice(0, 8);
+    return d.length > 5 ? d.slice(0, 5) + "-" + d.slice(5) : d;
+  }
+  function formatarData(iso) {
+    if (!iso) return "";
+    var p = iso.split("-");
+    return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : iso;
+  }
+
+  // ---------- Busca de CEP (ViaCEP) ----------
+  var cepStatus = $("cep-status");
+  $("cep").addEventListener("input", function () {
+    this.value = formatarCep(this.value);
+    var digitos = this.value.replace(/\D/g, "");
+    if (digitos.length === 8) buscarCep(digitos);
+  });
+
+  function buscarCep(digitos) {
+    cepStatus.textContent = "Buscando endereço…";
+    fetch("https://viacep.com.br/ws/" + digitos + "/json/")
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.erro) { cepStatus.textContent = "CEP não encontrado. Preencha o endereço manualmente."; return; }
+        if (d.logradouro) $("rua").value = d.logradouro;
+        if (d.bairro) $("bairro").value = d.bairro;
+        if (d.localidade) $("cidade").value = d.localidade;
+        if (d.uf) $("uf").value = d.uf;
+        cepStatus.textContent = "Endereço preenchido. Informe o número.";
+        $("numero").focus();
+        atualizarPrevia();
+      })
+      .catch(function () {
+        cepStatus.textContent = "Sem conexão para buscar o CEP. Preencha o endereço manualmente.";
+      });
+  }
+
+  // ---------- Tamanho da etiqueta ----------
+  function aplicarTamanhoPreset() {
+    var v = $("tamanho").value;
+    var custom = v === "custom";
+    $("larguraMm").disabled = !custom;
+    $("alturaMm").disabled = !custom;
+    if (!custom) {
+      var p = v.split("x");
+      $("larguraMm").value = p[0];
+      $("alturaMm").value = p[1];
+    }
+  }
+  function tamanhoAtual() {
+    var w = Math.min(104, Math.max(20, parseInt($("larguraMm").value, 10) || 100));
+    var h = Math.min(300, Math.max(20, parseInt($("alturaMm").value, 10) || 75));
+    return { w: w, h: h };
+  }
+
+  // ---------- Montagem da etiqueta ----------
+  function linhasEndereco(d) {
+    var l1 = d.rua + (d.numero ? ", " + d.numero : "");
+    var l2 = d.complemento;
+    var cidadeUf = d.cidade + (d.uf ? "/" + d.uf.toUpperCase() : "");
+    var l3 = [d.bairro, cidadeUf].filter(Boolean).join(" – ");
+    return [l1, l2, l3].filter(Boolean);
+  }
+
+  function htmlEtiqueta(d, cfg, volume, total, tam) {
+    var remetente = [cfg.remTelefone, cfg.remEndereco].filter(Boolean).join(" · ");
+    var entrega = d.dataEntrega ? "Entrega: " + formatarData(d.dataEntrega) : "";
+    return '' +
+      '<div class="etiqueta" style="--w:' + tam.w + ';--h:' + tam.h + '">' +
+        '<div class="et-topo">' +
+          '<div>' +
+            '<div class="et-marca">' + escapar(cfg.remNome || "Remetente") + '</div>' +
+            (remetente ? '<div class="et-remetente">' + escapar(remetente) + '</div>' : '') +
+          '</div>' +
+          (d.pedido ? '<div class="et-pedido"><div class="et-rotulo">Pedido</div>' + escapar(d.pedido) + '</div>' : '') +
+        '</div>' +
+        '<div class="et-dest">' +
+          '<div class="et-rotulo">Destinatário</div>' +
+          '<div class="et-nome">' + escapar(d.nome) + '</div>' +
+          linhasEndereco(d).map(function (l) { return '<div class="et-end">' + escapar(l) + '</div>'; }).join("") +
+          ((d.cep || d.telefone) ?
+            '<div><span class="et-cep">' + (d.cep ? "CEP " + escapar(d.cep) : "") + '</span>' +
+            (d.telefone ? (d.cep ? " · " : "") + "Tel. " + escapar(d.telefone) : "") + '</div>' : '') +
+        '</div>' +
+        '<div class="et-item">' +
+          '<div class="et-rotulo">Item</div>' +
+          '<div class="et-item-texto">' + escapar(d.item) + '</div>' +
+        '</div>' +
+        '<div class="et-rodape">' +
+          '<div class="et-entrega">' + escapar(entrega) + '</div>' +
+          '<div class="et-volume"><div class="et-rotulo">Volume</div><div class="et-volume-num">' + volume + '/' + total + '</div></div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function montarEtiquetas(d, cfg, limite) {
+    var total = parseInt(d.volumes, 10) || 1;
+    var tam = tamanhoAtual();
+    var qtd = limite ? Math.min(total, limite) : total;
+    var html = "";
+    for (var i = 1; i <= qtd; i++) html += htmlEtiqueta(d, cfg, i, total, tam);
+    return html;
+  }
+
+  // ---------- Pré-visualização ----------
+  function atualizarPrevia() {
+    var d = lerCampos(CAMPOS_VENDA);
+    var cfg = lerCampos(CAMPOS_CONFIG);
+    var total = parseInt(d.volumes, 10) || 1;
+    var vazio = !d.nome && !d.rua && !d.item;
+    if (vazio) {
+      d.nome = "Nome do cliente"; d.rua = "Rua Exemplo"; d.numero = "123";
+      d.bairro = "Centro"; d.cidade = "Cidade"; d.uf = "UF"; d.item = "Descrição do item";
+    }
+    $("previa").innerHTML = montarEtiquetas(d, cfg, MAX_PREVIA);
+    var ajuste = medirAjusteItem();
+    aplicarAjusteItem($("previa"), ajuste);
+    $("aviso-item").hidden = !(ajuste && ajuste.linhas);
+    var tam = tamanhoAtual();
+    $("resumo").textContent = total + (total === 1 ? " etiqueta" : " etiquetas") + " de " + tam.w + " × " + tam.h + " mm" +
+      (total > MAX_PREVIA ? " (mostrando as primeiras " + MAX_PREVIA + ")" : "") +
+      (vazio ? " — exemplo" : "");
+    salvarConfig();
+  }
+
+  // Diminui a fonte do item até caber; se ainda assim não couber, corta em linha inteira.
+  // Mede na pré-visualização, que tem o mesmo tamanho em mm da impressão.
+  function medirAjusteItem() {
+    var el = document.querySelector("#previa .et-item-texto");
+    if (!el) return null;
+    var fonte = 1.1;
+    el.style.maxHeight = "";
+    el.style.fontSize = fonte + "em";
+    while (el.scrollHeight > el.clientHeight + 1 && fonte > 0.75) {
+      fonte = Math.round((fonte - 0.05) * 100) / 100;
+      el.style.fontSize = fonte + "em";
+    }
+    var linhas = 0;
+    if (el.scrollHeight > el.clientHeight + 1) {
+      linhas = Math.max(1, Math.floor(el.clientHeight / parseFloat(getComputedStyle(el).lineHeight)));
+    }
+    return { fonte: fonte, linhas: linhas };
+  }
+
+  function aplicarAjusteItem(container, ajuste) {
+    if (!ajuste) return;
+    container.querySelectorAll(".et-item-texto").forEach(function (el) {
+      el.style.fontSize = ajuste.fonte + "em";
+      el.style.maxHeight = ajuste.linhas ? (ajuste.linhas * 1.15) + "em" : "";
+    });
+  }
+
+  function salvarConfig() { gravarArmazenado(CHAVE_CONFIG, lerCampos(CAMPOS_CONFIG)); }
+
+  // ---------- Validação e impressão ----------
+  function validar(d) {
+    var faltando = [];
+    if (!d.item) faltando.push("item");
+    if (!d.nome) faltando.push("nome");
+    if (!d.rua) faltando.push("rua");
+    if (!d.cidade) faltando.push("cidade");
+    var vol = Number(d.volumes);
+    if (faltando.length) return "Preencha: " + faltando.join(", ") + ".";
+    if (!Number.isInteger(vol) || vol < 1 || vol > 999) return "A quantidade de volumes deve ser de 1 a 999.";
+    return "";
+  }
+
+  function fontesProntas() {
+    return document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  }
+
+  function imprimir(d) {
+    var cfg = lerCampos(CAMPOS_CONFIG);
+    var tam = tamanhoAtual();
+    $("estilo-pagina").textContent = "@page { size: " + tam.w + "mm " + tam.h + "mm; margin: 0; }";
+    // Espera as fontes carregarem para não imprimir com a fonte padrão.
+    fontesProntas().then(function () {
+      atualizarPrevia();
+      $("area-impressao").innerHTML = montarEtiquetas(d, cfg);
+      aplicarAjusteItem($("area-impressao"), medirAjusteItem());
+      window.print();
+    });
+  }
+
+  $("form-etiqueta").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var d = lerCampos(CAMPOS_VENDA);
+    var msg = validar(d);
+    $("erro").textContent = msg;
+    if (msg) return;
+    adicionarHistorico(d);
+    imprimir(d);
+  });
+
+  $("btn-limpar").addEventListener("click", function () {
+    CAMPOS_VENDA.forEach(function (id) { $(id).value = ""; });
+    $("volumes").value = "1";
+    $("erro").textContent = "";
+    cepStatus.textContent = "Digite o CEP para preencher o endereço.";
+    atualizarPrevia();
+    $("pedido").focus();
+  });
+
+  // ---------- Histórico (reimpressão) ----------
+  function adicionarHistorico(d) {
+    var lista = lerArmazenado(CHAVE_HISTORICO, []);
+    var registro = Object.assign({ quando: new Date().toISOString() }, d);
+    lista.unshift(registro);
+    gravarArmazenado(CHAVE_HISTORICO, lista.slice(0, MAX_HISTORICO));
+    renderizarHistorico();
+  }
+
+  function renderizarHistorico() {
+    var lista = lerArmazenado(CHAVE_HISTORICO, []);
+    var ul = $("historico");
+    if (!lista.length) { ul.innerHTML = '<li class="vazio">Nenhuma etiqueta impressa ainda.</li>'; return; }
+    ul.innerHTML = lista.map(function (r, i) {
+      var quando = new Date(r.quando);
+      var titulo = (r.pedido ? "Pedido " + r.pedido + " – " : "") + r.nome;
+      return '<li><div class="info"><strong>' + escapar(titulo) + '</strong>' +
+        '<small>' + escapar(r.volumes) + ' vol. · ' + escapar(r.cidade) + ' · ' + quando.toLocaleString("pt-BR") + '</small></div>' +
+        '<button type="button" class="btn pequeno" data-indice="' + i + '">Carregar</button></li>';
+    }).join("");
+  }
+
+  $("historico").addEventListener("click", function (ev) {
+    var botao = ev.target.closest("button[data-indice]");
+    if (!botao) return;
+    var r = lerArmazenado(CHAVE_HISTORICO, [])[Number(botao.dataset.indice)];
+    if (!r) return;
+    var dados = {};
+    CAMPOS_VENDA.forEach(function (id) { dados[id] = r[id] || ""; });
+    preencherCampos(dados);
+    $("erro").textContent = "";
+    atualizarPrevia();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  // ---------- Início ----------
+  preencherCampos(lerArmazenado(CHAVE_CONFIG, {}));
+  aplicarTamanhoPreset();
+  $("tamanho").addEventListener("change", function () { aplicarTamanhoPreset(); atualizarPrevia(); });
+  $("form-etiqueta").addEventListener("input", function () {
+    if ($("erro").textContent) $("erro").textContent = validar(lerCampos(CAMPOS_VENDA));
+    atualizarPrevia();
+  });
+  renderizarHistorico();
+  atualizarPrevia();
+  fontesProntas().then(atualizarPrevia);
+})();
+</script>
+</body>
+</html>
