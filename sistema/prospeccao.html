@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Energizando House – Prospecção</title>
+<style>
+  @font-face { font-family: "Kanit"; src: url("../fontes/Kanit-ExtraBoldItalic.ttf") format("truetype"); font-weight: 800; font-style: italic; }
+  @font-face { font-family: "Rajdhani"; src: url("../fontes/Rajdhani-Medium.ttf") format("truetype"); font-weight: 500; }
+  @font-face { font-family: "Rajdhani"; src: url("../fontes/Rajdhani-SemiBold.ttf") format("truetype"); font-weight: 600 900; }
+
+  :root {
+    --cor-fundo: #f3f4f6;
+    --cor-painel: #ffffff;
+    --cor-texto: #111827;
+    --cor-suave: #6b7280;
+    --cor-borda: #d1d5db;
+    --cor-marca: #f5b301;
+    --cor-marca-clara: #fff7db;
+    --cor-marca-escura: #111827;
+    --cor-erro: #b91c1c;
+    --cor-ok: #15803d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Rajdhani", Arial, sans-serif; font-weight: 500; font-size: 17px; background: var(--cor-fundo); color: var(--cor-texto); }
+  body.travado { overflow: hidden; }
+  [hidden] { display: none !important; }
+
+  /* ---------- Menu ---------- */
+  header.topo { background: var(--cor-marca-escura); color: #fff; display: flex; align-items: center; gap: 24px; padding: 0 16px; flex-wrap: wrap; }
+  .logo { font-family: "Kanit", Arial, sans-serif; font-style: italic; font-weight: 800; font-size: 22px; letter-spacing: .5px; padding: 12px 0; }
+  .logo span { color: var(--cor-marca); }
+  nav.menu { display: flex; gap: 4px; }
+  .menu-item { position: relative; }
+  .menu-item > button { background: none; border: 0; color: #fff; font: inherit; font-weight: 600; padding: 16px 14px; cursor: pointer; }
+  .menu-item > button:hover, .menu-item.aberto > button { background: rgba(255,255,255,.12); }
+  .submenu { display: none; position: absolute; top: 100%; left: 0; min-width: 220px; background: #fff; border: 1px solid var(--cor-borda); border-radius: 0 0 8px 8px; box-shadow: 0 8px 20px rgba(0,0,0,.15); z-index: 10; }
+  .menu-item.aberto .submenu { display: block; }
+  .submenu a { display: block; padding: 12px 16px; color: var(--cor-texto); text-decoration: none; font-weight: 600; }
+  .submenu a:hover, .submenu a.ativo { background: var(--cor-marca-clara); }
+
+  main { max-width: 1200px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  .subtitulo { color: var(--cor-suave); margin: 0 0 16px; }
+  .painel { background: var(--cor-painel); border: 1px solid var(--cor-borda); border-radius: 10px; padding: 18px; }
+
+  label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  input, textarea, select { width: 100%; font: inherit; font-size: 16px; padding: 8px 10px; border: 1px solid var(--cor-borda); border-radius: 6px; background: #fff; color: var(--cor-texto); }
+  input:focus, textarea:focus, select:focus { outline: 2px solid var(--cor-marca); border-color: var(--cor-marca); }
+  textarea { resize: vertical; min-height: 64px; }
+  .obrigatorio::after { content: " *"; color: var(--cor-erro); }
+  .dica { font-size: 13px; color: var(--cor-suave); margin-top: 3px; }
+  .erro { color: var(--cor-erro); font-weight: 600; min-height: 22px; }
+  .linha { display: grid; gap: 10px; grid-template-columns: repeat(12, 1fr); margin-bottom: 10px; }
+  .c3 { grid-column: span 3; } .c4 { grid-column: span 4; } .c5 { grid-column: span 5; } .c6 { grid-column: span 6; }
+  .c7 { grid-column: span 7; } .c8 { grid-column: span 8; } .c12 { grid-column: span 12; }
+  @media (max-width: 600px) { .linha > * { grid-column: span 12; } }
+
+  .botoes { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  button.btn, a.btn { font: inherit; font-weight: 700; font-size: 17px; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--cor-borda); background: #fff; color: var(--cor-texto); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  button.btn:hover, a.btn:hover { background: #f9fafb; }
+  button.btn.primario { background: var(--cor-marca); border-color: var(--cor-marca); color: #111; }
+  button.btn.primario:hover { filter: brightness(.95); }
+  button.btn.pequeno, a.btn.pequeno { font-size: 14px; padding: 5px 10px; }
+  button.btn.perigo { color: var(--cor-erro); }
+  a.btn.whats { background: #16a34a; border-color: #16a34a; color: #fff; }
+  a.btn.whats:hover { filter: brightness(.95); background: #16a34a; }
+
+  /* ---------- Barra de ferramentas ---------- */
+  .ferramentas { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .ferramentas .busca { flex: 1 1 260px; }
+  .resumo-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+  @media (max-width: 700px) { .resumo-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .resumo-card { background: #fff; border: 1px solid var(--cor-borda); border-radius: 10px; padding: 10px 14px; }
+  .resumo-card strong { display: block; font-size: 28px; line-height: 1.1; }
+  .resumo-card span { color: var(--cor-suave); font-size: 14px; font-weight: 600; }
+  .resumo-card.alerta strong { color: var(--cor-erro); }
+
+  .abas { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .aba { font: inherit; font-weight: 700; font-size: 15px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--cor-borda); background: #fff; cursor: pointer; }
+  .aba.ativa { background: var(--cor-marca-escura); border-color: var(--cor-marca-escura); color: #fff; }
+  .aba small { opacity: .7; margin-left: 4px; }
+
+  /* ---------- Lista de leads ---------- */
+  .leads { list-style: none; margin: 0; padding: 0; }
+  .lead { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.3fr) minmax(0, 1.1fr) minmax(0, 1.6fr) auto; gap: 12px; align-items: center; padding: 12px 4px; border-bottom: 1px solid #eee; }
+  .lead:last-child { border-bottom: 0; }
+  .lead-nome { font-weight: 700; font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lead small { color: var(--cor-suave); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lead-cabecalho { font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: var(--cor-suave); font-weight: 700; padding-top: 0; }
+  @media (max-width: 800px) {
+    .lead { grid-template-columns: minmax(0, 1fr) auto; }
+    .lead > .col-etapa, .lead > .col-proximo { grid-column: 1; }
+    .lead > .col-acao { grid-column: 2; grid-row: 1 / span 3; align-self: center; }
+    .lead > .col-origem, .lead-cabecalho { display: none; }
+  }
+  .selo { display: inline-block; font-size: 13px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #eef2f7; white-space: nowrap; }
+  .selo.etapa-novo { background: #e0f2fe; color: #075985; }
+  .selo.etapa-contato { background: #ede9fe; color: #5b21b6; }
+  .selo.etapa-proposta { background: var(--cor-marca-clara); color: #854d0e; }
+  .selo.etapa-negociacao { background: #ffedd5; color: #9a3412; }
+  .selo.etapa-ganho { background: #dcfce7; color: #166534; }
+  .selo.etapa-perdido { background: #f3f4f6; color: #6b7280; }
+  .selo.atrasado { background: #fee2e2; color: var(--cor-erro); }
+  .selo.hoje { background: var(--cor-marca); color: #111; }
+  .vazio { color: var(--cor-suave); padding: 20px 4px; }
+
+  /* ---------- Painel de atendimento rápido ---------- */
+  .fundo-escuro { position: fixed; inset: 0; background: rgba(17,24,39,.45); z-index: 20; }
+  .atendimento { position: fixed; top: 0; right: 0; bottom: 0; width: min(620px, 100%); background: var(--cor-fundo); z-index: 21; display: flex; flex-direction: column; box-shadow: -8px 0 24px rgba(0,0,0,.2); }
+  .at-topo { background: var(--cor-marca-escura); color: #fff; padding: 14px 16px; }
+  .at-topo-linha { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .at-nome { font-size: 22px; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+  .at-sub { color: #d1d5db; font-size: 15px; }
+  .at-cronometro { font-variant-numeric: tabular-nums; color: var(--cor-marca); font-weight: 700; white-space: nowrap; }
+  .at-fechar { background: none; border: 0; color: #fff; font-size: 26px; line-height: 1; cursor: pointer; padding: 0 4px; }
+  .at-topo .botoes { margin-top: 10px; }
+  .at-topo a.btn:not(.whats) { background: transparent; color: #fff; border-color: rgba(255,255,255,.4); }
+  .at-corpo { flex: 1; overflow-y: auto; padding: 14px 16px 24px; }
+  .at-rodape { background: #fff; border-top: 1px solid var(--cor-borda); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .bloco { background: #fff; border: 1px solid var(--cor-borda); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+  .bloco > h3 { font-size: 15px; text-transform: uppercase; letter-spacing: .5px; color: var(--cor-suave); margin: 0 0 10px; }
+  .bloco.destaque { border-color: var(--cor-marca); box-shadow: 0 0 0 1px var(--cor-marca); }
+  details.bloco > summary { cursor: pointer; font-size: 15px; text-transform: uppercase; letter-spacing: .5px; color: var(--cor-suave); font-weight: 700; }
+  details.bloco[open] > summary { margin-bottom: 10px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .chip { font: inherit; font-size: 15px; font-weight: 600; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--cor-borda); background: #fff; cursor: pointer; }
+  .chip:hover { background: #f9fafb; }
+  .chip[aria-pressed="true"] { background: var(--cor-marca); border-color: var(--cor-marca); color: #111; }
+  .chip.frase { font-size: 14px; background: #f9fafb; border-style: dashed; }
+  .rotulo-chips { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+
+  .roteiro { list-style: none; margin: 0; padding: 0; }
+  .roteiro li { padding: 4px 0; }
+  .roteiro label { display: flex; gap: 8px; align-items: flex-start; font-size: 16px; font-weight: 500; margin: 0; cursor: pointer; }
+  .roteiro input { width: auto; margin-top: 4px; accent-color: var(--cor-marca); }
+  .roteiro input:checked + span { color: var(--cor-suave); text-decoration: line-through; }
+  .progresso { height: 6px; background: #eee; border-radius: 999px; overflow: hidden; margin-bottom: 8px; }
+  .progresso div { height: 100%; background: var(--cor-marca); width: 0; transition: width .2s; }
+
+  .mensagens { list-style: none; margin: 0; padding: 0; }
+  .mensagens li { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+  .mensagens li:last-child { border-bottom: 0; }
+  .mensagens .texto { min-width: 0; }
+  .mensagens .texto strong { display: block; }
+  .mensagens .texto small { color: var(--cor-suave); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .linha-tempo { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 2px solid var(--cor-borda); }
+  .linha-tempo li { position: relative; padding: 0 0 12px 8px; }
+  .linha-tempo li::before { content: ""; position: absolute; left: -21px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--cor-marca); border: 2px solid #fff; }
+  .linha-tempo .quando { font-size: 13px; color: var(--cor-suave); }
+  .linha-tempo .nota { white-space: pre-line; overflow-wrap: anywhere; }
+
+  .aviso-salvo { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--cor-marca-escura); color: #fff; padding: 10px 18px; border-radius: 8px; font-weight: 700; z-index: 40; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+
+  dialog { border: 0; border-radius: 12px; padding: 0; width: min(520px, calc(100% - 32px)); box-shadow: 0 12px 40px rgba(0,0,0,.3); }
+  dialog::backdrop { background: rgba(17,24,39,.45); }
+  dialog form { padding: 18px; }
+  dialog h2 { margin: 0 0 12px; font-size: 21px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="logo">ENERGIZANDO <span>HOUSE</span></div>
+  <nav class="menu" aria-label="Menu principal">
+    <div class="menu-item" id="menu-prospeccao">
+      <button type="button" aria-haspopup="true" aria-expanded="false">Prospecção ▾</button>
+      <div class="submenu" role="menu">
+        <a href="#leads" class="ativo" role="menuitem">👥 Leads</a>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main id="leads">
+  <h1>Leads</h1>
+  <p class="subtitulo">Clique em <strong>⚡ Atender</strong> para abrir o atendimento rápido e anotar tudo enquanto fala com o cliente.</p>
+
+  <div class="resumo-cards">
+    <div class="resumo-card"><strong id="r-total">0</strong><span>Leads ativos</span></div>
+    <div class="resumo-card"><strong id="r-quentes">0</strong><span>🔥 Quentes</span></div>
+    <div class="resumo-card"><strong id="r-hoje">0</strong><span>Retornos para hoje</span></div>
+    <div class="resumo-card alerta"><strong id="r-atrasados">0</strong><span>Retornos atrasados</span></div>
+  </div>
+
+  <div class="ferramentas">
+    <input class="busca" id="busca" type="search" placeholder="🔎 Buscar por nome, telefone ou cidade" autocomplete="off">
+    <button type="button" class="btn primario" id="btn-novo">＋ Novo lead</button>
+    <button type="button" class="btn" id="btn-exportar">⬇️ Exportar planilha</button>
+  </div>
+
+  <div class="abas" id="abas" role="tablist"></div>
+
+  <section class="painel">
+    <ul class="leads" id="lista"></ul>
+  </section>
+</main>
+
+<!-- Painel de atendimento rápido -->
+<div class="fundo-escuro" id="fundo" hidden></div>
+<aside class="atendimento" id="atendimento" role="dialog" aria-modal="true" aria-labelledby="at-nome" hidden>
+  <div class="at-topo">
+    <div class="at-topo-linha">
+      <div>
+        <div class="at-nome" id="at-nome"></div>
+        <div class="at-sub" id="at-sub"></div>
+      </div>
+      <div style="text-align:right">
+        <button type="button" class="at-fechar" id="at-fechar" aria-label="Fechar (Esc)">×</button>
+        <div class="at-cronometro" title="Tempo deste atendimento">⏱ <span id="at-tempo">00:00</span></div>
+      </div>
+    </div>
+    <div class="botoes">
+      <a class="btn pequeno whats" id="at-whats" target="_blank" rel="noopener">💬 WhatsApp</a>
+      <a class="btn pequeno" id="at-ligar">📞 Ligar</a>
+    </div>
+  </div>
+
+  <div class="at-corpo">
+    <div class="bloco">
+      <div class="linha" style="margin-bottom:0">
+        <div class="c6">
+          <label for="at-etapa">Etapa do funil</label>
+          <select id="at-etapa"></select>
+        </div>
+        <div class="c6">
+          <div class="rotulo-chips">Temperatura</div>
+          <div class="chips" id="at-temperatura" style="margin-bottom:0"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bloco destaque">
+      <h3>📝 Registrar este contato</h3>
+      <div class="rotulo-chips">Canal</div>
+      <div class="chips" id="at-canal"></div>
+      <div class="rotulo-chips">Resultado</div>
+      <div class="chips" id="at-resultado"></div>
+
+      <label for="at-nota">Anotações da conversa</label>
+      <textarea id="at-nota" rows="4" placeholder="O que o cliente falou, dúvidas, objeções, combinados…"></textarea>
+      <div class="chips" id="at-frases" style="margin-top:6px"></div>
+
+      <div class="linha" style="margin-top:6px">
+        <div class="c6">
+          <label for="at-prox-acao">Próximo passo</label>
+          <select id="at-prox-acao"></select>
+        </div>
+        <div class="c3"><label for="at-prox-data">Data</label><input id="at-prox-data" type="date"></div>
+        <div class="c3"><label for="at-prox-hora">Hora</label><input id="at-prox-hora" type="time"></div>
+      </div>
+      <div class="chips" id="at-atalhos-data" style="margin-bottom:0"></div>
+    </div>
+
+    <details class="bloco" open>
+      <summary>👤 Ficha do cliente</summary>
+      <p class="dica" style="margin-top:0">Salva sozinha enquanto você digita.</p>
+      <div class="linha">
+        <div class="c7"><label for="f-nome">Nome</label><input id="f-nome" data-ficha="nome" autocomplete="off"></div>
+        <div class="c5"><label for="f-telefone">Telefone / WhatsApp</label><input id="f-telefone" data-ficha="telefone" inputmode="tel" autocomplete="off"></div>
+      </div>
+      <div class="linha">
+        <div class="c7"><label for="f-email">E-mail</label><input id="f-email" data-ficha="email" type="email" autocomplete="off"></div>
+        <div class="c5"><label for="f-cidade">Cidade</label><input id="f-cidade" data-ficha="cidade" autocomplete="off"></div>
+      </div>
+      <div class="linha">
+        <div class="c4"><label for="f-conta">Conta de luz (R$/mês)</label><input id="f-conta" data-ficha="conta" inputmode="decimal" autocomplete="off"></div>
+        <div class="c4"><label for="f-concessionaria">Concessionária</label><input id="f-concessionaria" data-ficha="concessionaria" autocomplete="off"></div>
+        <div class="c4"><label for="f-origem">Origem</label><select id="f-origem" data-ficha="origem"></select></div>
+      </div>
+      <div class="linha">
+        <div class="c4"><label for="f-imovel">Tipo de imóvel</label><select id="f-imovel" data-ficha="imovel"></select></div>
+        <div class="c4"><label for="f-telhado">Telhado</label><select id="f-telhado" data-ficha="telhado"></select></div>
+        <div class="c4"><label for="f-pagamento">Pagamento</label><select id="f-pagamento" data-ficha="pagamento"></select></div>
+      </div>
+      <div class="linha" style="margin-bottom:0">
+        <div class="c12"><label for="f-decisor">Quem decide a compra</label><input id="f-decisor" data-ficha="decisor" placeholder="Ex.: o casal decide junto; sócio precisa aprovar" autocomplete="off"></div>
+      </div>
+    </details>
+
+    <details class="bloco" open>
+      <summary>✅ Roteiro do atendimento</summary>
+      <div class="progresso"><div id="at-progresso"></div></div>
+      <ul class="roteiro" id="at-roteiro"></ul>
+    </details>
+
+    <details class="bloco">
+      <summary>💬 Mensagens prontas de WhatsApp</summary>
+      <ul class="mensagens" id="at-mensagens"></ul>
+    </details>
+
+    <div class="bloco">
+      <h3>🕑 Histórico de atendimentos</h3>
+      <ul class="linha-tempo" id="at-historico"></ul>
+    </div>
+  </div>
+
+  <div class="at-rodape">
+    <button type="button" class="btn pequeno perigo" id="at-excluir">Excluir lead</button>
+    <div class="botoes">
+      <span class="erro" id="at-erro" role="alert" style="min-height:0"></span>
+      <button type="button" class="btn primario" id="at-salvar" title="Ctrl + Enter">💾 Salvar atendimento</button>
+    </div>
+  </div>
+</aside>
+
+<!-- Novo lead -->
+<dialog id="dlg-novo">
+  <form id="form-novo" method="dialog" novalidate>
+    <h2>Novo lead</h2>
+    <div class="linha">
+      <div class="c7"><label for="n-nome" class="obrigatorio">Nome</label><input id="n-nome" autocomplete="off"></div>
+      <div class="c5"><label for="n-telefone" class="obrigatorio">Telefone / WhatsApp</label><input id="n-telefone" inputmode="tel" autocomplete="off"></div>
+    </div>
+    <div class="linha">
+      <div class="c6"><label for="n-cidade">Cidade</label><input id="n-cidade" autocomplete="off"></div>
+      <div class="c6"><label for="n-origem">Origem</label><select id="n-origem"></select></div>
+    </div>
+    <div class="erro" id="n-erro" role="alert"></div>
+    <div class="botoes" style="justify-content:flex-end">
+      <button type="button" class="btn" id="n-cancelar">Cancelar</button>
+      <button type="button" class="btn" id="n-salvar">Salvar</button>
+      <button type="submit" class="btn primario">Salvar e atender ⚡</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="aviso-salvo" id="aviso" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var CHAVE_LEADS = "eh.prospeccao.leads";
+
+  var ETAPAS = [
+    { id: "novo", nome: "Novo" },
+    { id: "contato", nome: "Em contato" },
+    { id: "proposta", nome: "Proposta enviada" },
+    { id: "negociacao", nome: "Negociação" },
+    { id: "ganho", nome: "Ganho" },
+    { id: "perdido", nome: "Perdido" }
+  ];
+  var TEMPERATURAS = [
+    { id: "frio", nome: "❄️ Frio" },
+    { id: "morno", nome: "🌤️ Morno" },
+    { id: "quente", nome: "🔥 Quente" }
+  ];
+  var CANAIS = ["💬 WhatsApp", "📞 Ligação", "🏠 Visita", "📧 E-mail", "📸 Instagram"];
+  var RESULTADOS = ["Conversou", "Não atendeu", "Pediu para retornar", "Pediu proposta", "Fechou negócio", "Sem interesse"];
+  var FRASES = [
+    "Vai enviar a foto da conta de luz.",
+    "Quer financiar.",
+    "Prefere pagar à vista.",
+    "Está pesquisando outros orçamentos.",
+    "Achou caro, quer condição melhor.",
+    "Precisa falar com o cônjuge/sócio.",
+    "Quer agendar visita técnica."
+  ];
+  var ACOES = ["", "Ligar de novo", "Mandar WhatsApp", "Enviar proposta", "Visita técnica", "Cobrar resposta da proposta", "Assinar contrato"];
+  var ORIGENS = ["", "Instagram", "Facebook", "Google", "Site", "Indicação", "Porta a porta", "Feira/evento", "Outro"];
+  var IMOVEIS = ["", "Residencial", "Comercial", "Rural", "Industrial"];
+  var TELHADOS = ["", "Cerâmico", "Fibrocimento", "Metálico", "Laje", "Solo"];
+  var PAGAMENTOS = ["", "À vista", "Financiamento", "Cartão", "Ainda não sabe"];
+  var ROTEIRO = [
+    "Apresentei a Energizando House",
+    "Confirmei nome, cidade e WhatsApp",
+    "Perguntei o valor da conta de luz",
+    "Pedi foto da conta de luz",
+    "Perguntei tipo de imóvel e de telhado",
+    "Entendi a forma de pagamento",
+    "Descobri quem decide a compra",
+    "Combinei o próximo passo com data"
+  ];
+  var MENSAGENS = [
+    { titulo: "Primeiro contato", texto: "Olá, {nome}! Aqui é da Energizando House. Vi seu interesse em energia solar. Posso te ajudar a reduzir a conta de luz? Qual o valor médio da sua conta hoje?" },
+    { titulo: "Pedir conta de luz", texto: "{nome}, para montar sua proposta certinha, pode me mandar uma foto da sua última conta de luz? Com ela calculo o sistema ideal para você." },
+    { titulo: "Proposta enviada", texto: "{nome}, acabei de enviar sua proposta de energia solar. Ficou alguma dúvida? Posso te explicar por ligação rapidinho." },
+    { titulo: "Retorno / follow-up", texto: "Oi, {nome}! Tudo bem? Passando para saber se conseguiu avaliar a proposta da Energizando House. Posso te ajudar em algo?" },
+    { titulo: "Agendar visita", texto: "{nome}, podemos agendar a visita técnica gratuita? Qual o melhor dia e horário para você?" }
+  ];
+
+  function $(id) { return document.getElementById(id); }
+
+  function lerLeads() {
+    try { var v = localStorage.getItem(CHAVE_LEADS); return v ? JSON.parse(v) : []; } catch (e) { return []; }
+  }
+  function gravarLeads() {
+    try { localStorage.setItem(CHAVE_LEADS, JSON.stringify(leads)); } catch (e) { /* sem armazenamento: segue sem salvar */ }
+  }
+
+  function escapar(texto) {
+    return String(texto == null ? "" : texto)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function opcoesSelect(el, lista) {
+    el.innerHTML = lista.map(function (o) {
+      var id = typeof o === "string" ? o : o.id;
+      var nome = typeof o === "string" ? (o || "—") : o.nome;
+      return '<option value="' + escapar(id) + '">' + escapar(nome) + '</option>';
+    }).join("");
+  }
+
+  function novoId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function nomeEtapa(id) { var e = ETAPAS.filter(function (x) { return x.id === id; })[0]; return e ? e.nome : id; }
+
+  // ---------- Datas ----------
+  function dataIso(d) {
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function hojeIso() { return dataIso(new Date()); }
+  function somarDias(n) { var d = new Date(); d.setDate(d.getDate() + n); return dataIso(d); }
+  function formatarData(iso) {
+    if (!iso) return "";
+    var p = iso.split("-");
+    return p.length === 3 ? p[2] + "/" + p[1] : iso;
+  }
+  function formatarQuando(iso) {
+    var d = new Date(iso);
+    return d.toLocaleDateString("pt-BR") + " às " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  }
+  function situacaoRetorno(lead) {
+    if (!lead.proximo || !lead.proximo.data || lead.etapa === "ganho" || lead.etapa === "perdido") return "";
+    var hoje = hojeIso();
+    if (lead.proximo.data < hoje) return "atrasado";
+    if (lead.proximo.data === hoje) return "hoje";
+    return "futuro";
+  }
+
+  // ---------- Telefone / WhatsApp ----------
+  function digitos(tel) { return String(tel || "").replace(/\D/g, ""); }
+  function numeroWhats(tel) {
+    var d = digitos(tel);
+    if (d.length === 10 || d.length === 11) d = "55" + d;
+    return d;
+  }
+  function linkWhats(tel, texto) {
+    return "https://wa.me/" + numeroWhats(tel) + (texto ? "?text=" + encodeURIComponent(texto) : "");
+  }
+  function primeiroNome(nome) { return String(nome || "").trim().split(/\s+/)[0] || ""; }
+
+  // ---------- Estado ----------
+  var leads = lerLeads();
+  var filtroEtapa = "ativos";
+  var leadAtual = null;
+  var registro = null;   // contato sendo registrado no painel
+  var inicioAtendimento = 0;
+  var cronometro = null;
+
+  // ---------- Menu ----------
+  var menu = $("menu-prospeccao");
+  var botaoMenu = menu.querySelector("button");
+  botaoMenu.addEventListener("click", function (ev) {
+    ev.stopPropagation();
+    var aberto = menu.classList.toggle("aberto");
+    botaoMenu.setAttribute("aria-expanded", aberto);
+  });
+  document.addEventListener("click", function () {
+    menu.classList.remove("aberto");
+    botaoMenu.setAttribute("aria-expanded", "false");
+  });
+
+  // ---------- Lista ----------
+  function prioridade(lead) {
+    var s = situacaoRetorno(lead);
+    return s === "atrasado" ? 0 : s === "hoje" ? 1 : lead.etapa === "novo" ? 2 : s === "futuro" ? 3 : 4;
+  }
+
+  function leadsFiltrados() {
+    var termo = $("busca").value.trim().toLowerCase();
+    var termoDigitos = digitos(termo);
+    return leads.filter(function (l) {
+      if (filtroEtapa === "ativos" && (l.etapa === "ganho" || l.etapa === "perdido")) return false;
+      if (filtroEtapa !== "ativos" && filtroEtapa !== "todos" && l.etapa !== filtroEtapa) return false;
+      if (!termo) return true;
+      return [l.nome, l.cidade, l.email].join(" ").toLowerCase().indexOf(termo) >= 0 ||
+        (termoDigitos.length >= 3 && digitos(l.telefone).indexOf(termoDigitos) >= 0);
+    }).sort(function (a, b) {
+      var pa = prioridade(a), pb = prioridade(b);
+      if (pa !== pb) return pa - pb;
+      var da = (a.proximo && a.proximo.data) || "9999", db = (b.proximo && b.proximo.data) || "9999";
+      if (da !== db) return da < db ? -1 : 1;
+      return a.criadoEm < b.criadoEm ? 1 : -1;
+    });
+  }
+
+  function renderizarAbas() {
+    var abas = [{ id: "ativos", nome: "Ativos" }].concat(ETAPAS, [{ id: "todos", nome: "Todos" }]);
+    $("abas").innerHTML = abas.map(function (a) {
+      var qtd = leads.filter(function (l) {
+        if (a.id === "todos") return true;
+        if (a.id === "ativos") return l.etapa !== "ganho" && l.etapa !== "perdido";
+        return l.etapa === a.id;
+      }).length;
+      return '<button type="button" class="aba' + (a.id === filtroEtapa ? " ativa" : "") + '" role="tab" aria-selected="' + (a.id === filtroEtapa) +
+        '" data-etapa="' + a.id + '">' + escapar(a.nome) + '<small>' + qtd + '</small></button>';
+    }).join("");
+  }
+
+  function renderizarResumo() {
+    var ativos = leads.filter(function (l) { return l.etapa !== "ganho" && l.etapa !== "perdido"; });
+    $("r-total").textContent = ativos.length;
+    $("r-quentes").textContent = ativos.filter(function (l) { return l.temperatura === "quente"; }).length;
+    $("r-hoje").textContent = ativos.filter(function (l) { return situacaoRetorno(l) === "hoje"; }).length;
+    $("r-atrasados").textContent = ativos.filter(function (l) { return situacaoRetorno(l) === "atrasado"; }).length;
+  }
+
+  function htmlProximo(l) {
+    var s = situacaoRetorno(l);
+    if (!s) return l.ultimoContato ? '<small>Último contato ' + escapar(formatarData(l.ultimoContato.slice(0, 10))) + '</small>' : '<small>Sem contato ainda</small>';
+    var rotulo = s === "atrasado" ? "Atrasado " + formatarData(l.proximo.data) : s === "hoje" ? "Hoje" + (l.proximo.hora ? " " + l.proximo.hora : "") : formatarData(l.proximo.data) + (l.proximo.hora ? " " + l.proximo.hora : "");
+    return '<span class="selo ' + (s === "futuro" ? "" : s) + '">' + escapar(rotulo) + '</span>' +
+      '<small>' + escapar(l.proximo.acao || "Retornar") + '</small>';
+  }
+
+  function renderizarLista() {
+    var lista = leadsFiltrados();
+    var ul = $("lista");
+    if (!leads.length) {
+      ul.innerHTML = '<li class="vazio">Nenhum lead cadastrado ainda. Clique em <strong>＋ Novo lead</strong> ou ' +
+        '<button type="button" class="btn pequeno" id="btn-exemplos">carregue alguns leads de exemplo</button> para testar.</li>';
+      return;
+    }
+    if (!lista.length) { ul.innerHTML = '<li class="vazio">Nenhum lead encontrado com esse filtro.</li>'; return; }
+    var temp = { frio: "❄️", morno: "🌤️", quente: "🔥" };
+    ul.innerHTML = '<li class="lead lead-cabecalho"><div>Cliente</div><div class="col-etapa">Etapa</div><div class="col-origem">Origem</div><div class="col-proximo">Próximo passo</div><div></div></li>' +
+      lista.map(function (l) {
+        return '<li class="lead">' +
+          '<div><div class="lead-nome">' + (temp[l.temperatura] ? temp[l.temperatura] + " " : "") + escapar(l.nome) + '</div>' +
+            '<small>' + escapar([l.telefone, l.cidade].filter(Boolean).join(" · ")) + '</small></div>' +
+          '<div class="col-etapa"><span class="selo etapa-' + escapar(l.etapa) + '">' + escapar(nomeEtapa(l.etapa)) + '</span></div>' +
+          '<div class="col-origem"><small>' + escapar(l.origem || "—") + '</small>' +
+            (l.conta ? '<small>Conta R$ ' + escapar(l.conta) + '</small>' : '') + '</div>' +
+          '<div class="col-proximo">' + htmlProximo(l) + '</div>' +
+          '<div class="col-acao"><button type="button" class="btn primario pequeno" data-atender="' + escapar(l.id) + '">⚡ Atender</button></div>' +
+        '</li>';
+      }).join("");
+  }
+
+  function renderizarTudo() { renderizarResumo(); renderizarAbas(); renderizarLista(); }
+
+  $("abas").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-etapa]");
+    if (!b) return;
+    filtroEtapa = b.dataset.etapa;
+    renderizarTudo();
+  });
+  $("busca").addEventListener("input", renderizarLista);
+  $("lista").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-atender]");
+    if (b) { abrirAtendimento(b.dataset.atender); return; }
+    if (ev.target.id === "btn-exemplos") carregarExemplos();
+  });
+
+  // ---------- Novo lead ----------
+  var dlg = $("dlg-novo");
+  opcoesSelect($("n-origem"), ORIGENS);
+
+  $("btn-novo").addEventListener("click", function () {
+    $("form-novo").reset();
+    $("n-erro").textContent = "";
+    dlg.showModal();
+    $("n-nome").focus();
+  });
+  $("n-cancelar").addEventListener("click", function () { dlg.close(); });
+
+  function criarLeadDoFormulario() {
+    var nome = $("n-nome").value.trim();
+    var telefone = $("n-telefone").value.trim();
+    if (!nome || digitos(telefone).length < 8) {
+      $("n-erro").textContent = !nome ? "Informe o nome." : "Informe um telefone válido.";
+      return null;
+    }
+    var lead = novoLead({ nome: nome, telefone: telefone, cidade: $("n-cidade").value.trim(), origem: $("n-origem").value });
+    leads.unshift(lead);
+    gravarLeads();
+    dlg.close();
+    renderizarTudo();
+    return lead;
+  }
+
+  function novoLead(dados) {
+    return Object.assign({
+      id: novoId(), criadoEm: new Date().toISOString(), etapa: "novo", temperatura: "",
+      nome: "", telefone: "", email: "", cidade: "", origem: "", conta: "", concessionaria: "",
+      imovel: "", telhado: "", pagamento: "", decisor: "",
+      roteiro: [], proximo: null, ultimoContato: "", historico: []
+    }, dados);
+  }
+
+  $("n-salvar").addEventListener("click", function () {
+    if (criarLeadDoFormulario()) mostrarAviso("Lead cadastrado.");
+  });
+  $("form-novo").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var lead = criarLeadDoFormulario();
+    if (lead) abrirAtendimento(lead.id);
+  });
+
+  // ---------- Atendimento rápido ----------
+  opcoesSelect($("at-etapa"), ETAPAS);
+  opcoesSelect($("at-prox-acao"), ACOES);
+  opcoesSelect($("f-origem"), ORIGENS);
+  opcoesSelect($("f-imovel"), IMOVEIS);
+  opcoesSelect($("f-telhado"), TELHADOS);
+  opcoesSelect($("f-pagamento"), PAGAMENTOS);
+
+  function htmlChips(lista, selecionado) {
+    return lista.map(function (o) {
+      var id = typeof o === "string" ? o : o.id;
+      var nome = typeof o === "string" ? o : o.nome;
+      return '<button type="button" class="chip" data-valor="' + escapar(id) + '" aria-pressed="' + (id === selecionado) + '">' + escapar(nome) + '</button>';
+    }).join("");
+  }
+
+  $("at-frases").innerHTML = FRASES.map(function (f) {
+    return '<button type="button" class="chip frase" data-frase="' + escapar(f) + '">＋ ' + escapar(f) + '</button>';
+  }).join("");
+  $("at-atalhos-data").innerHTML = [["Hoje", 0], ["Amanhã", 1], ["+3 dias", 3], ["+1 semana", 7], ["+15 dias", 15]].map(function (a) {
+    return '<button type="button" class="chip" data-dias="' + a[1] + '">' + a[0] + '</button>';
+  }).join("");
+
+  function abrirAtendimento(id) {
+    leadAtual = leads.filter(function (l) { return l.id === id; })[0];
+    if (!leadAtual) return;
+    registro = { canal: CANAIS[0], resultado: "" };
+    $("at-nota").value = "";
+    $("at-erro").textContent = "";
+    var p = leadAtual.proximo || {};
+    $("at-prox-acao").value = p.acao || "";
+    $("at-prox-data").value = p.data || "";
+    $("at-prox-hora").value = p.hora || "";
+
+    document.querySelectorAll("[data-ficha]").forEach(function (el) { el.value = leadAtual[el.dataset.ficha] || ""; });
+    $("at-etapa").value = leadAtual.etapa;
+    renderizarCabecalho();
+    renderizarChips();
+    renderizarRoteiro();
+    renderizarMensagens();
+    renderizarHistorico();
+
+    $("fundo").hidden = false;
+    $("atendimento").hidden = false;
+    document.body.classList.add("travado");
+    iniciarCronometro();
+    $("at-nota").focus();
+  }
+
+  function fecharAtendimento() {
+    if ($("atendimento").hidden) return;
+    if ($("at-nota").value.trim() && !confirm("Você escreveu anotações que ainda não foram salvas. Fechar mesmo assim?")) return;
+    $("atendimento").hidden = true;
+    $("fundo").hidden = true;
+    document.body.classList.remove("travado");
+    clearInterval(cronometro);
+    leadAtual = null;
+    renderizarTudo();
+  }
+
+  function iniciarCronometro() {
+    inicioAtendimento = Date.now();
+    clearInterval(cronometro);
+    atualizarCronometro();
+    cronometro = setInterval(atualizarCronometro, 1000);
+  }
+  function duracaoTexto(ms) {
+    var s = Math.floor(ms / 1000);
+    return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+  }
+  function atualizarCronometro() { $("at-tempo").textContent = duracaoTexto(Date.now() - inicioAtendimento); }
+
+  function renderizarCabecalho() {
+    $("at-nome").textContent = leadAtual.nome || "Sem nome";
+    $("at-sub").textContent = [leadAtual.telefone, leadAtual.cidade, leadAtual.origem ? "via " + leadAtual.origem : ""].filter(Boolean).join(" · ");
+    var temTelefone = digitos(leadAtual.telefone).length >= 8;
+    $("at-whats").href = temTelefone ? linkWhats(leadAtual.telefone) : "#";
+    $("at-ligar").href = temTelefone ? "tel:" + digitos(leadAtual.telefone) : "#";
+  }
+
+  function renderizarChips() {
+    $("at-temperatura").innerHTML = htmlChips(TEMPERATURAS, leadAtual.temperatura);
+    $("at-canal").innerHTML = htmlChips(CANAIS, registro.canal);
+    $("at-resultado").innerHTML = htmlChips(RESULTADOS, registro.resultado);
+  }
+
+  function renderizarRoteiro() {
+    var marcados = leadAtual.roteiro || [];
+    $("at-roteiro").innerHTML = ROTEIRO.map(function (item, i) {
+      return '<li><label><input type="checkbox" data-roteiro="' + i + '"' + (marcados.indexOf(item) >= 0 ? " checked" : "") + '><span>' + escapar(item) + '</span></label></li>';
+    }).join("");
+    $("at-progresso").style.width = Math.round(marcados.filter(function (m) { return ROTEIRO.indexOf(m) >= 0; }).length / ROTEIRO.length * 100) + "%";
+  }
+
+  function renderizarMensagens() {
+    var temTelefone = digitos(leadAtual.telefone).length >= 8;
+    $("at-mensagens").innerHTML = MENSAGENS.map(function (m) {
+      var texto = m.texto.replace(/\{nome\}/g, primeiroNome(leadAtual.nome));
+      return '<li><div class="texto"><strong>' + escapar(m.titulo) + '</strong><small title="' + escapar(texto) + '">' + escapar(texto) + '</small></div>' +
+        (temTelefone ? '<a class="btn pequeno whats" target="_blank" rel="noopener" href="' + escapar(linkWhats(leadAtual.telefone, texto)) + '">Enviar</a>' : '') +
+        '<button type="button" class="btn pequeno" data-copiar="' + escapar(texto) + '">Copiar</button></li>';
+    }).join("");
+  }
+
+  function renderizarHistorico() {
+    var h = leadAtual.historico || [];
+    if (!h.length) { $("at-historico").innerHTML = '<li class="vazio" style="padding:0">Nenhum atendimento registrado. Este é o primeiro!</li>'; return; }
+    $("at-historico").innerHTML = h.map(function (r) {
+      var detalhes = [r.canal, r.resultado, r.duracao ? "⏱ " + r.duracao : ""].filter(Boolean).join(" · ");
+      var prox = r.proximo && r.proximo.data ? "➡️ " + (r.proximo.acao || "Retornar") + " em " + formatarData(r.proximo.data) + (r.proximo.hora ? " " + r.proximo.hora : "") : "";
+      return '<li><div class="quando">' + escapar(formatarQuando(r.quando)) + '</div>' +
+        '<div><strong>' + escapar(detalhes) + '</strong></div>' +
+        (r.nota ? '<div class="nota">' + escapar(r.nota) + '</div>' : '') +
+        (prox ? '<div class="dica">' + escapar(prox) + '</div>' : '') + '</li>';
+    }).join("");
+  }
+
+  // Ficha, etapa, temperatura e roteiro salvam na hora; o contato só salva no botão.
+  document.querySelectorAll("[data-ficha]").forEach(function (el) {
+    el.addEventListener("input", function () {
+      leadAtual[el.dataset.ficha] = el.value.trim();
+      gravarLeads();
+      renderizarCabecalho();
+      if (el.dataset.ficha === "nome" || el.dataset.ficha === "telefone") renderizarMensagens();
+    });
+  });
+  $("at-etapa").addEventListener("change", function () { leadAtual.etapa = this.value; gravarLeads(); });
+  $("at-temperatura").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-valor]");
+    if (!b) return;
+    leadAtual.temperatura = leadAtual.temperatura === b.dataset.valor ? "" : b.dataset.valor;
+    gravarLeads();
+    renderizarChips();
+  });
+  $("at-canal").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-valor]");
+    if (!b) return;
+    registro.canal = b.dataset.valor;
+    renderizarChips();
+  });
+  $("at-resultado").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-valor]");
+    if (!b) return;
+    registro.resultado = registro.resultado === b.dataset.valor ? "" : b.dataset.valor;
+    $("at-erro").textContent = "";
+    sugerirProximoPasso(registro.resultado);
+    renderizarChips();
+  });
+  $("at-roteiro").addEventListener("change", function (ev) {
+    var item = ROTEIRO[Number(ev.target.dataset.roteiro)];
+    var marcados = (leadAtual.roteiro || []).filter(function (m) { return m !== item; });
+    if (ev.target.checked) marcados.push(item);
+    leadAtual.roteiro = marcados;
+    gravarLeads();
+    renderizarRoteiro();
+  });
+  $("at-frases").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-frase]");
+    if (!b) return;
+    var nota = $("at-nota");
+    nota.value = nota.value.trim() ? nota.value.replace(/\s*$/, "") + "\n" + b.dataset.frase : b.dataset.frase;
+    nota.focus();
+  });
+  $("at-atalhos-data").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-dias]");
+    if (!b) return;
+    $("at-prox-data").value = somarDias(Number(b.dataset.dias));
+    if (!$("at-prox-acao").value) $("at-prox-acao").value = "Ligar de novo";
+  });
+  $("at-mensagens").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-copiar]");
+    if (!b) return;
+    var texto = b.dataset.copiar;
+    if (navigator.clipboard) navigator.clipboard.writeText(texto).then(function () { mostrarAviso("Mensagem copiada."); }, function () { prompt("Copie a mensagem:", texto); });
+    else prompt("Copie a mensagem:", texto);
+  });
+
+  // Preenche o próximo passo mais comum para o resultado escolhido, sem apagar o que já foi digitado.
+  function sugerirProximoPasso(resultado) {
+    var sugestoes = {
+      "Não atendeu": ["Ligar de novo", 1],
+      "Pediu para retornar": ["Ligar de novo", 1],
+      "Pediu proposta": ["Enviar proposta", 0],
+      "Conversou": ["Mandar WhatsApp", 2]
+    };
+    var s = sugestoes[resultado];
+    if (!s || $("at-prox-data").value) return;
+    $("at-prox-acao").value = s[0];
+    $("at-prox-data").value = somarDias(s[1]);
+  }
+
+  function salvarAtendimento() {
+    var nota = $("at-nota").value.trim();
+    if (!registro.resultado && !nota) {
+      $("at-erro").textContent = "Escolha o resultado ou escreva uma anotação.";
+      return;
+    }
+    var proximo = $("at-prox-data").value ? { acao: $("at-prox-acao").value, data: $("at-prox-data").value, hora: $("at-prox-hora").value } : null;
+    var agora = new Date().toISOString();
+    leadAtual.historico = [{
+      quando: agora, canal: registro.canal, resultado: registro.resultado, nota: nota,
+      duracao: duracaoTexto(Date.now() - inicioAtendimento), proximo: proximo
+    }].concat(leadAtual.historico || []);
+    leadAtual.ultimoContato = agora;
+    leadAtual.proximo = proximo;
+
+    var etapaAntes = leadAtual.etapa;
+    if (registro.resultado === "Fechou negócio") leadAtual.etapa = "ganho";
+    else if (registro.resultado === "Sem interesse") leadAtual.etapa = "perdido";
+    else if (leadAtual.etapa === "novo" && registro.resultado !== "Não atendeu") leadAtual.etapa = "contato";
+    gravarLeads();
+
+    var msg = "Atendimento salvo.";
+    if (leadAtual.etapa !== etapaAntes) msg += " Etapa: " + nomeEtapa(leadAtual.etapa) + ".";
+    mostrarAviso(msg);
+
+    // Fica no mesmo cliente, pronto para um novo registro.
+    $("at-etapa").value = leadAtual.etapa;
+    $("at-nota").value = "";
+    registro = { canal: registro.canal, resultado: "" };
+    renderizarChips();
+    renderizarHistorico();
+    iniciarCronometro();
+  }
+
+  $("at-salvar").addEventListener("click", salvarAtendimento);
+  $("at-fechar").addEventListener("click", fecharAtendimento);
+  $("fundo").addEventListener("click", fecharAtendimento);
+  $("at-excluir").addEventListener("click", function () {
+    if (!confirm("Excluir o lead \"" + leadAtual.nome + "\" e todo o histórico? Não dá para desfazer.")) return;
+    var id = leadAtual.id;
+    leads = leads.filter(function (l) { return l.id !== id; });
+    gravarLeads();
+    $("at-nota").value = "";
+    fecharAtendimento();
+    mostrarAviso("Lead excluído.");
+  });
+  document.addEventListener("keydown", function (ev) {
+    if ($("atendimento").hidden) return;
+    if (ev.key === "Escape") fecharAtendimento();
+    if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); salvarAtendimento(); }
+  });
+
+  // ---------- Aviso ----------
+  var temporizadorAviso = null;
+  function mostrarAviso(texto) {
+    $("aviso").textContent = texto;
+    $("aviso").hidden = false;
+    clearTimeout(temporizadorAviso);
+    temporizadorAviso = setTimeout(function () { $("aviso").hidden = true; }, 2500);
+  }
+
+  // ---------- Exportar planilha (CSV para Excel) ----------
+  $("btn-exportar").addEventListener("click", function () {
+    if (!leads.length) { mostrarAviso("Não há leads para exportar."); return; }
+    var colunas = ["Nome", "Telefone", "E-mail", "Cidade", "Origem", "Etapa", "Temperatura", "Conta de luz", "Concessionária",
+      "Imóvel", "Telhado", "Pagamento", "Decisor", "Próximo passo", "Data próximo passo", "Último contato", "Última anotação", "Cadastrado em"];
+    var linhas = leads.map(function (l) {
+      var ult = (l.historico || [])[0] || {};
+      return [l.nome, l.telefone, l.email, l.cidade, l.origem, nomeEtapa(l.etapa), l.temperatura, l.conta, l.concessionaria,
+        l.imovel, l.telhado, l.pagamento, l.decisor, l.proximo ? l.proximo.acao : "", l.proximo ? l.proximo.data : "",
+        l.ultimoContato ? formatarQuando(l.ultimoContato) : "", ult.nota || "", formatarQuando(l.criadoEm)];
+    });
+    var csv = [colunas].concat(linhas).map(function (cols) {
+      return cols.map(function (c) { return '"' + String(c == null ? "" : c).replace(/"/g, '""') + '"'; }).join(";");
+    }).join("\r\n");
+    var blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "leads-" + hojeIso() + ".csv";
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  });
+
+  // ---------- Exemplos ----------
+  function carregarExemplos() {
+    var ontem = new Date(Date.now() - 86400000).toISOString();
+    leads = [
+      novoLead({ nome: "Maria Souza (exemplo)", telefone: "(11) 98888-1234", cidade: "Campinas", origem: "Instagram", temperatura: "quente",
+        etapa: "contato", conta: "650", imovel: "Residencial", telhado: "Cerâmico", pagamento: "Financiamento",
+        roteiro: ROTEIRO.slice(0, 4), proximo: { acao: "Enviar proposta", data: hojeIso(), hora: "15:00" }, ultimoContato: ontem,
+        historico: [{ quando: ontem, canal: CANAIS[0], resultado: "Pediu proposta", nota: "Vai enviar a foto da conta de luz.\nQuer financiar.", duracao: "06:12",
+          proximo: { acao: "Enviar proposta", data: hojeIso(), hora: "15:00" } }] }),
+      novoLead({ nome: "João Pereira (exemplo)", telefone: "(19) 97777-4321", cidade: "Sumaré", origem: "Indicação", temperatura: "morno",
+        etapa: "proposta", conta: "1.200", imovel: "Comercial", proximo: { acao: "Cobrar resposta da proposta", data: somarDias(-2), hora: "" }, ultimoContato: ontem }),
+      novoLead({ nome: "Ana Lima (exemplo)", telefone: "(11) 96666-0000", cidade: "Jundiaí", origem: "Site" })
+    ];
+    gravarLeads();
+    renderizarTudo();
+  }
+
+  // ---------- Início ----------
+  renderizarTudo();
+})();
+</script>
+</body>
+</html>
