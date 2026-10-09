@@ -327,6 +327,18 @@
   </form>
 </dialog>
 
+<!-- Confirmação dentro da tela (o navegador pode bloquear o confirm()) -->
+<dialog id="dlg-confirmar">
+  <form method="dialog">
+    <h2 id="cf-titulo"></h2>
+    <p id="cf-texto"></p>
+    <div class="botoes" style="justify-content:flex-end">
+      <button type="submit" class="btn" value="nao">Voltar</button>
+      <button type="submit" class="btn primario" value="sim" id="cf-ok"></button>
+    </div>
+  </form>
+</dialog>
+
 <div class="aviso-salvo" id="aviso" hidden></div>
 
 <script>
@@ -650,9 +662,30 @@
     $("at-nota").focus();
   }
 
+  // Pede confirmação num diálogo da própria tela e só chama aoConfirmar se a pessoa aceitar.
+  var acaoConfirmada = null;
+  function confirmar(titulo, texto, rotuloOk, aoConfirmar) {
+    $("cf-titulo").textContent = titulo;
+    $("cf-texto").textContent = texto;
+    $("cf-ok").textContent = rotuloOk;
+    acaoConfirmada = aoConfirmar;
+    $("dlg-confirmar").showModal();
+  }
+  $("cf-ok").addEventListener("click", function () {
+    var acao = acaoConfirmada;
+    acaoConfirmada = null;
+    if (acao) acao();
+  });
+
   function fecharAtendimento() {
     if ($("atendimento").hidden) return;
-    if ($("at-nota").value.trim() && !confirm("Você escreveu anotações que ainda não foram salvas. Fechar mesmo assim?")) return;
+    if ($("at-nota").value.trim()) {
+      confirmar("Fechar sem salvar?", "Você escreveu anotações que ainda não foram salvas.", "Fechar sem salvar", function () {
+        $("at-nota").value = "";
+        fecharAtendimento();
+      });
+      return;
+    }
     $("atendimento").hidden = true;
     $("fundo").hidden = true;
     document.body.classList.remove("travado");
@@ -774,9 +807,22 @@
     var b = ev.target.closest("[data-copiar]");
     if (!b) return;
     var texto = b.dataset.copiar;
-    if (navigator.clipboard) navigator.clipboard.writeText(texto).then(function () { mostrarAviso("Mensagem copiada."); }, function () { prompt("Copie a mensagem:", texto); });
-    else prompt("Copie a mensagem:", texto);
+    if (navigator.clipboard) navigator.clipboard.writeText(texto).then(function () { mostrarAviso("Mensagem copiada."); }, function () { copiarSemClipboard(texto); });
+    else copiarSemClipboard(texto);
   });
+
+  function copiarSemClipboard(texto) {
+    var campo = document.createElement("textarea");
+    campo.value = texto;
+    campo.style.position = "fixed";
+    campo.style.opacity = "0";
+    document.body.appendChild(campo);
+    campo.select();
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    document.body.removeChild(campo);
+    mostrarAviso(ok ? "Mensagem copiada." : "Não foi possível copiar. Use o botão Enviar.");
+  }
 
   // Preenche o próximo passo mais comum para o resultado escolhido, sem apagar o que já foi digitado.
   function sugerirProximoPasso(resultado) {
@@ -830,17 +876,18 @@
   $("at-fechar").addEventListener("click", fecharAtendimento);
   $("fundo").addEventListener("click", fecharAtendimento);
   $("at-excluir").addEventListener("click", function () {
-    if (!confirm("Excluir o lead \"" + leadAtual.nome + "\" e todo o histórico? Não dá para desfazer.")) return;
-    var id = leadAtual.id;
-    leads = leads.filter(function (l) { return l.id !== id; });
-    gravarLeads();
-    $("at-nota").value = "";
-    fecharAtendimento();
-    mostrarAviso("Lead excluído.");
+    confirmar("Excluir lead?", "\"" + leadAtual.nome + "\" e todo o histórico serão apagados. Não dá para desfazer.", "Excluir", function () {
+      var id = leadAtual.id;
+      leads = leads.filter(function (l) { return l.id !== id; });
+      gravarLeads();
+      $("at-nota").value = "";
+      fecharAtendimento();
+      mostrarAviso("Lead excluído.");
+    });
   });
   document.addEventListener("keydown", function (ev) {
-    if ($("atendimento").hidden) return;
-    if (ev.key === "Escape") fecharAtendimento();
+    if ($("atendimento").hidden || $("dlg-confirmar").open) return;
+    if (ev.key === "Escape") { ev.preventDefault(); fecharAtendimento(); }
     if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); salvarAtendimento(); }
   });
 
